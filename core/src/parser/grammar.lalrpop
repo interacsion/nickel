@@ -1586,6 +1586,45 @@ SignedNumLiteral: Number = <sign: "-"?> <value: NumberLiteral> => {
     }
 };
 
+use crate::bytecode::ast::document;
+
+pub Document: document::Document<'ast> = <mut fields: (<DocumentFieldDef> ",")*> <last: DocumentFieldDef?> => {
+    fields.extend(last);
+    document::Document {
+        field_defs: alloc.alloc_many(fields),
+    }
+};
+
+DocumentRecord: document::Record<'ast> = "{" <mut fields: (<DocumentFieldDef> ",")*> <last: DocumentFieldDef?> "}" => {
+    fields.extend(last);
+    document::Record {
+        field_defs: alloc.alloc_many(fields),
+    }
+};
+
+DocumentFieldDef: document::FieldDef<'ast> = <path: DocumentFieldPath> "=" <value: DocumentTerm> => {
+    document::FieldDef {
+        path: alloc.alloc_many(path),
+        value,
+    }
+};
+
+DocumentFieldPath: Vec<LocIdent> = <mut elems: (<ExtendedIdent> ".")*> <last: ExtendedIdent> => {
+    elems.push(last);
+    elems
+};
+
+DocumentTerm: document::Term<'ast> = {
+    "null" => document::Term::Null,
+    Bool => document::Term::Bool(<>),
+    NumberLiteral => document::Term::Number(alloc.alloc_number(<>)),
+    StaticString => document::Term::String(alloc.alloc_str(&*<>)),
+    EnumTag => document::Term::EnumVariant(<>),
+    DocumentRecord => document::Term::Record(<>),
+    List<DocumentTerm> => document::Term::Array(alloc.alloc_many(<>)),
+    "$" <Term> => document::Term::NickelTerm(alloc.alloc(<>)),
+}
+
 extern {
     type Location = usize;
     type Error = ParseError;

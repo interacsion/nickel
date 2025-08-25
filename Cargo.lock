@@ -3378,6 +3378,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "nickel-lang-document"
+version = "0.1.0"
+dependencies = [
+ "nickel-lang-core",
+ "serde",
+]
+
+[[package]]
 name = "nickel-lang-flock"
 version = "0.1.0"
 dependencies = [

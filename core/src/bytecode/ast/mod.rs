@@ -27,6 +27,7 @@ pub mod alloc;
 pub mod builder;
 pub mod combine;
 pub mod compat;
+pub mod document;
 pub mod pattern;
 pub mod primop;
 pub mod record;

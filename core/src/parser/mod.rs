@@ -105,6 +105,7 @@ generate_lalrpop_parser_impl!(
     grammar::CliFieldAssignmentParser,
     (Vec<LocIdent>, Ast<'ast>, RawSpan)
 );
+generate_lalrpop_parser_impl!(grammar::DocumentParser, crate::bytecode::ast::document::Document<'ast>);
 
 /// General interface of the various specialized Nickel parsers.
 ///

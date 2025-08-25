@@ -45,6 +45,9 @@ impl Allocable for typ::RecordRow<'_> {}
 impl Allocable for Ident {}
 impl Allocable for LocIdent {}
 
+impl Allocable for document::FieldDef<'_> {}
+impl Allocable for document::Term<'_> {}
+
 /// Owns the arenas required to allocate new AST nodes and provide builder methods to create them.
 ///
 /// # Drop and arena allocation
