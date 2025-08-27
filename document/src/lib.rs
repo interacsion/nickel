@@ -174,11 +174,11 @@ impl<'de> de::IntoDeserializer<'de, Error> for &'de Value<'de> {
 }
 
 #[derive(Clone, Debug)]
-pub struct NickelTerm<'de> {
-    pub ast: &'de Ast<'de>,
+pub struct NickelTerm<'a> {
+    pub ast: &'a Ast<'a>,
 }
 
-impl<'de> de::Deserialize<'de> for NickelTerm<'de> {
+impl<'de: 'a, 'a> de::Deserialize<'de> for NickelTerm<'a> {
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
         D: de::Deserializer<'de>,
