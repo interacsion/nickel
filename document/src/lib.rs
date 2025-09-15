@@ -34,7 +34,7 @@ impl<'de> Deserializer<'de> {
     }
 }
 
-impl<'de> de::Deserializer<'de> for &'de Deserializer<'de> {
+impl<'de> de::Deserializer<'de> for Deserializer<'de> {
     type Error = Error;
 
     fn deserialize_any<V>(self, visitor: V) -> Result<V::Value>
@@ -43,7 +43,7 @@ impl<'de> de::Deserializer<'de> for &'de Deserializer<'de> {
     {
         visitor.visit_map(MapDeserializer::new(
             self.fields
-                .iter()
+                .into_iter()
                 .map(|(k, v)| (BorrowedStrDeserializer::new(k), v)),
         ))
     }
@@ -122,7 +122,7 @@ fn traverse_field<'de>(
     Ok(())
 }
 
-impl<'de> de::Deserializer<'de> for &'de Value<'de> {
+impl<'de> de::Deserializer<'de> for Value<'de> {
     type Error = Error;
 
     fn deserialize_any<V>(self, visitor: V) -> Result<V::Value>
@@ -131,19 +131,19 @@ impl<'de> de::Deserializer<'de> for &'de Value<'de> {
     {
         match self {
             Value::Null => visitor.visit_none(),
-            Value::Bool(b) => visitor.visit_bool(*b),
+            Value::Bool(b) => visitor.visit_bool(b),
             Value::Number(_number) => todo!(),
             Value::String(s) => visitor.visit_borrowed_str(s),
             Value::EnumVariant(s) => visitor.visit_borrowed_str(s),
             Value::Record(fields) => visitor.visit_map(MapDeserializer::new(
                 fields
-                    .iter()
+                    .into_iter()
                     .map(|(k, v)| (BorrowedStrDeserializer::new(k), v)),
             )),
             Value::Array(_field_defs) => todo!(),
             Value::NickelTerm(ast) => visitor.visit_map(MapDeserializer::new(std::iter::once((
                 BorrowedStrDeserializer::new("$nickel-lang-document::private::NickelTerm"),
-                *ast as *const Ast as usize as u64,
+                ast as *const Ast as usize as u64,
             )))),
         }
     }
@@ -165,7 +165,7 @@ impl<'de> de::Deserializer<'de> for &'de Value<'de> {
     }
 }
 
-impl<'de> de::IntoDeserializer<'de, Error> for &'de Value<'de> {
+impl<'de> de::IntoDeserializer<'de, Error> for Value<'de> {
     type Deserializer = Self;
 
     fn into_deserializer(self) -> Self {
