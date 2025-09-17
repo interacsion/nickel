@@ -3,12 +3,11 @@
 use std::{
     ffi::{OsStr, OsString},
     path::PathBuf,
-    rc::Rc,
+    sync::Arc,
 };
 
 use codespan::ByteIndex;
 use codespan_reporting::files::Error;
-use nickel_lang_vector::Vector;
 
 use crate::{position::RawSpan, stdlib::StdlibModule};
 
@@ -26,13 +25,13 @@ struct File {
     /// The name of the file.
     name: OsString,
     /// The source code of the file.
-    source: Rc<str>,
+    source: Arc<str>,
     /// The byte index of the start of each line. The first element of this array is always 0.
-    line_starts: Rc<[ByteIndex]>,
+    line_starts: Arc<[ByteIndex]>,
 }
 
 impl File {
-    fn new(name: impl Into<OsString>, source: impl Into<Rc<str>>) -> Self {
+    fn new(name: impl Into<OsString>, source: impl Into<Arc<str>>) -> Self {
         let source = source.into();
         let line_starts: Vec<_> = std::iter::once(ByteIndex(0))
             .chain(
@@ -69,14 +68,14 @@ impl File {
 /// be duplicated.
 #[derive(Debug, Clone)]
 pub struct Files {
-    files: Vector<File, 8>,
+    files: Vec<File>,
     first_non_stdlib: usize,
 }
 
 impl Files {
     /// Creates a new `Files`, initialized with the nickel standard library.
     pub fn new() -> Self {
-        let files: Vector<_, 8> = crate::stdlib::modules()
+        let files: Vec<_> = crate::stdlib::modules()
             .iter()
             .map(|m| File::new(m.file_name().to_owned(), m.content()))
             .collect();
@@ -104,7 +103,7 @@ impl Files {
     ///
     /// The name does not need to be unique, and this method does not affect any other files
     /// with the same name.
-    pub fn add(&mut self, name: impl Into<OsString>, source: impl Into<Rc<str>>) -> FileId {
+    pub fn add(&mut self, name: impl Into<OsString>, source: impl Into<Arc<str>>) -> FileId {
         let file_id = FileId(self.files.len() as u32);
         self.files.push(File::new(name, source));
         file_id
@@ -113,12 +112,8 @@ impl Files {
     /// Updates a source file in place.
     ///
     /// Panics if `file_id` is invalid.
-    pub fn update(&mut self, file_id: FileId, source: impl Into<Rc<str>>) {
-        // This implementation would be a little nicer if `Vector` supported mutable access.
-        // unwrap: we're allowed to panic if file_id is invalid
-        let mut old = self.get(file_id).unwrap().clone();
-        old = File::new(old.name, source);
-        self.files.set(file_id.0 as usize, old);
+    pub fn update(&mut self, file_id: FileId, source: impl Into<Arc<str>>) {
+        self.files[file_id.0 as usize].source = source.into();
     }
 
     /// Returns a span containing all of a source.
